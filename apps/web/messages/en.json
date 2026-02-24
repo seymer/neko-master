@@ -540,6 +540,8 @@
     "subtitle": "Monitor the online status and data collection continuity of each backend",
     "uptime": "uptime",
     "latency": "Latency",
+    "gatewayLatency": "Gateway latency",
+    "serverLatency": "Server latency",
     "avgLatency": "Avg latency",
     "maxLatency": "Max latency",
     "gaps": "gap(s)",

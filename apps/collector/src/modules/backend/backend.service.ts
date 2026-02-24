@@ -119,7 +119,14 @@ export class BackendService {
             console.log(`[BackendService] Health check for ${backend.name}: ${health.status}${health.message ? ` - ${health.message}` : ''}`);
           }
           this.healthStatus.set(backend.id, health);
-          this.db.repos.health.writeHealthLog(backend.id, minute, health.status, health.latency, health.message);
+          this.db.repos.health.writeHealthLog(
+            backend.id,
+            minute,
+            health.status,
+            health.latency,
+            health.serverLatency,
+            health.message,
+          );
           continue;
         }
 
@@ -150,6 +157,7 @@ export class BackendService {
           minute,
           health.status,
           result.success ? latency : undefined,
+          undefined,
           result.message,
         );
       } catch (error) {
@@ -159,7 +167,7 @@ export class BackendService {
           message: error instanceof Error ? error.message : 'Health check failed',
         };
         this.healthStatus.set(backend.id, health);
-        this.db.repos.health.writeHealthLog(backend.id, minute, 'unhealthy', undefined, health.message);
+        this.db.repos.health.writeHealthLog(backend.id, minute, 'unhealthy', undefined, undefined, health.message);
         console.warn(`[BackendService] Health check error for ${backend.name}:`, error);
       }
     }
@@ -189,6 +197,7 @@ export class BackendService {
         time: row.minute,
         status: row.status,
         latency_ms: row.latency_ms,
+        server_latency_ms: row.server_latency_ms,
         message: row.message,
       });
     }
@@ -553,11 +562,18 @@ export class BackendService {
     const ageText = Number.isFinite(ageMs) ? `${Math.round(ageMs / 1000)}s ago` : 'unknown';
     const timeoutText = `${Math.round(timeoutMs / 1000)}s`;
     const isOnline = Number.isFinite(ageMs) && ageMs <= timeoutMs;
+    const gatewayLatency = typeof heartbeat.gatewayLatencyMs === 'number' && Number.isFinite(heartbeat.gatewayLatencyMs)
+      ? heartbeat.gatewayLatencyMs
+      : undefined;
+    const serverLatency = typeof heartbeat.serverLatencyMs === 'number' && Number.isFinite(heartbeat.serverLatencyMs)
+      ? heartbeat.serverLatencyMs
+      : undefined;
 
     return {
       status: isOnline ? 'healthy' : 'unhealthy',
       lastChecked: now,
-      latency: isOnline && heartbeat.gatewayLatencyMs ? heartbeat.gatewayLatencyMs : undefined,
+      latency: isOnline ? gatewayLatency : undefined,
+      serverLatency: isOnline ? serverLatency : undefined,
       message: isOnline
         ? `Agent ${heartbeat.agentId} online (last seen ${ageText})`
         : `Agent offline (last seen ${ageText}, timeout ${timeoutText})`,

@@ -46,15 +46,16 @@ type reportPayload struct {
 }
 
 type heartbeatPayload struct {
-	BackendID          int    `json:"backendId"`
-	AgentID            string `json:"agentId"`
-	Hostname           string `json:"hostname,omitempty"`
-	Version            string `json:"version,omitempty"`
-	AgentVersion       string `json:"agentVersion,omitempty"`
-	ProtocolVersion    int    `json:"protocolVersion"`
-	GatewayType        string `json:"gatewayType,omitempty"`
-	GatewayURL         string `json:"gatewayUrl,omitempty"`
-	GatewayLatencyMs   int64  `json:"gatewayLatencyMs,omitempty"`
+	BackendID        int    `json:"backendId"`
+	AgentID          string `json:"agentId"`
+	Hostname         string `json:"hostname,omitempty"`
+	Version          string `json:"version,omitempty"`
+	AgentVersion     string `json:"agentVersion,omitempty"`
+	ProtocolVersion  int    `json:"protocolVersion"`
+	GatewayType      string `json:"gatewayType,omitempty"`
+	GatewayURL       string `json:"gatewayUrl,omitempty"`
+	GatewayLatencyMs int64  `json:"gatewayLatencyMs,omitempty"`
+	ServerLatencyMs  int64  `json:"serverLatencyMs,omitempty"`
 }
 
 type configPayload struct {
@@ -86,6 +87,7 @@ type Runner struct {
 	lastConfigHash   string
 	lastPolicyHash   string
 	gatewayLatencyMs int64
+	serverLatencyMs  int64
 }
 
 func NewRunner(cfg config.Config) *Runner {
@@ -576,7 +578,8 @@ func (r *Runner) setRetryBatch(batch []domain.TrafficUpdate, id string) {
 
 func (r *Runner) sendHeartbeat(ctx context.Context) error {
 	r.mu.Lock()
-	latencyMs := r.gatewayLatencyMs
+	gatewayLatencyMs := r.gatewayLatencyMs
+	serverLatencyMs := r.serverLatencyMs
 	r.mu.Unlock()
 
 	payload := heartbeatPayload{
@@ -588,42 +591,57 @@ func (r *Runner) sendHeartbeat(ctx context.Context) error {
 		ProtocolVersion:  config.AgentProtocolVersion,
 		GatewayType:      r.cfg.GatewayType,
 		GatewayURL:       r.cfg.GatewayEndpoint,
-		GatewayLatencyMs: latencyMs,
+		GatewayLatencyMs: gatewayLatencyMs,
+		ServerLatencyMs:  serverLatencyMs,
 	}
-	return r.postJSON(ctx, "/agent/heartbeat", payload)
+	latencyMs, err := r.postJSONWithLatency(ctx, "/agent/heartbeat", payload)
+	if err != nil {
+		return err
+	}
+
+	r.mu.Lock()
+	r.serverLatencyMs = latencyMs
+	r.mu.Unlock()
+	return nil
 }
 
 func (r *Runner) postJSON(ctx context.Context, path string, payload interface{}) error {
+	_, err := r.postJSONWithLatency(ctx, path, payload)
+	return err
+}
+
+func (r *Runner) postJSONWithLatency(ctx context.Context, path string, payload interface{}) (int64, error) {
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	var buf bytes.Buffer
 	gz := gzip.NewWriter(&buf)
 	if _, err = gz.Write(body); err != nil {
-		return err
+		return 0, err
 	}
 	if err = gz.Close(); err != nil {
-		return err
+		return 0, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.cfg.ServerAPIBase+path, &buf)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Authorization", "Bearer "+r.cfg.BackendToken)
 
+	requestAt := time.Now()
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return nil
+		return time.Since(requestAt).Milliseconds(), nil
 	}
 
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
@@ -631,7 +649,7 @@ func (r *Runner) postJSON(ctx context.Context, path string, payload interface{})
 	if msg == "" {
 		msg = resp.Status
 	}
-	return fmt.Errorf("server http %d: %s", resp.StatusCode, msg)
+	return 0, fmt.Errorf("server http %d: %s", resp.StatusCode, msg)
 }
 
 func newRequestID() string {

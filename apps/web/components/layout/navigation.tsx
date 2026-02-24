@@ -282,24 +282,25 @@ export function Navigation({
 
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="flex items-center justify-around h-16 px-2">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onTabChange(item.id)}
-                className={cn(
-                  "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all",
-                  isActive ? "text-primary" : "text-muted-foreground",
-                  item.id === "devices" && "hidden min-[410px]:flex",
-                )}>
-                <Icon className={cn("w-5 h-5", isActive && "scale-110")} />
-                <span className="text-[10px]">{t(item.id)}</span>
-              </button>
-            );
-          })}
+        <div className="h-16 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex items-center h-full min-w-full px-1">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onTabChange(item.id)}
+                  className={cn(
+                    "min-w-[20%] shrink-0 flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg transition-all",
+                    isActive ? "text-primary" : "text-muted-foreground",
+                  )}>
+                  <Icon className="w-5 h-5" />
+                  <span className="text-[10px]">{t(item.id)}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </nav>
 

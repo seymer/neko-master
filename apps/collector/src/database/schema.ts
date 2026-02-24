@@ -378,6 +378,7 @@ export const SCHEMA = {
       gateway_url TEXT,
       remote_ip TEXT,
       gateway_latency_ms INTEGER,
+      server_latency_ms INTEGER,
       last_seen DATETIME NOT NULL,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (backend_id) REFERENCES backend_configs(id) ON DELETE CASCADE
@@ -434,6 +435,7 @@ export const SCHEMA = {
       minute TEXT NOT NULL,
       status TEXT NOT NULL,
       latency_ms INTEGER,
+      server_latency_ms INTEGER,
       message TEXT,
       PRIMARY KEY (backend_id, minute),
       FOREIGN KEY (backend_id) REFERENCES backend_configs(id) ON DELETE CASCADE

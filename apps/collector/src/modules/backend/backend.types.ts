@@ -39,6 +39,7 @@ export interface BackendHealthInfo {
   lastChecked: number;
   message?: string;
   latency?: number;
+  serverLatency?: number;
 }
 
 export interface BackendResponse {
@@ -94,6 +95,7 @@ export interface BackendHealthPoint {
   time: string;
   status: 'healthy' | 'unhealthy' | 'unknown';
   latency_ms: number | null;
+  server_latency_ms: number | null;
   message: string | null;
 }
 

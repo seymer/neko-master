@@ -115,12 +115,14 @@ export interface BackendHealth {
   lastChecked: number;
   message?: string;
   latency?: number;
+  serverLatency?: number;
 }
 
 export interface BackendHealthPoint {
   time: string;
   status: 'healthy' | 'unhealthy' | 'unknown';
   latency_ms: number | null;
+  server_latency_ms: number | null;
   message: string | null;
 }
 
@@ -648,6 +650,7 @@ export function getPresetTimeRange(
   const now = new Date();
   const end = new Date(now);
   end.setMilliseconds(0);
+  end.setSeconds(0); // Truncate to minute to align with backend health log interval
   
   // Helper to get start of today in local time
   const getStartOfToday = () => {

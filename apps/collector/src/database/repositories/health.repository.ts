@@ -13,6 +13,7 @@ export interface HealthLogRow {
   minute: string;
   status: HealthStatus;
   latency_ms: number | null;
+  server_latency_ms: number | null;
   message: string | null;
 }
 
@@ -28,16 +29,18 @@ export class HealthRepository {
     minute: string,
     status: HealthStatus,
     latencyMs?: number,
+    serverLatencyMs?: number,
     message?: string,
   ): void {
     this.db.prepare(`
-      INSERT INTO backend_health_logs (backend_id, minute, status, latency_ms, message)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO backend_health_logs (backend_id, minute, status, latency_ms, server_latency_ms, message)
+      VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(backend_id, minute) DO UPDATE SET
         status = excluded.status,
         latency_ms = excluded.latency_ms,
+        server_latency_ms = excluded.server_latency_ms,
         message = excluded.message
-    `).run(backendId, minute, status, latencyMs ?? null, message ?? null);
+    `).run(backendId, minute, status, latencyMs ?? null, serverLatencyMs ?? null, message ?? null);
   }
 
   /**
@@ -49,7 +52,7 @@ export class HealthRepository {
     toISO: string,
   ): HealthLogRow[] {
     return this.db.prepare(`
-      SELECT backend_id, minute, status, latency_ms, message
+      SELECT backend_id, minute, status, latency_ms, server_latency_ms, message
       FROM backend_health_logs
       WHERE backend_id = ? AND minute >= ? AND minute <= ?
       ORDER BY minute ASC
@@ -61,7 +64,7 @@ export class HealthRepository {
    */
   getHealthHistoryAll(fromISO: string, toISO: string): HealthLogRow[] {
     return this.db.prepare(`
-      SELECT backend_id, minute, status, latency_ms, message
+      SELECT backend_id, minute, status, latency_ms, server_latency_ms, message
       FROM backend_health_logs
       WHERE minute >= ? AND minute <= ?
       ORDER BY backend_id ASC, minute ASC

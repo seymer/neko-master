@@ -539,6 +539,8 @@
     "subtitle": "监控各后端节点的在线状态与数据采集连续性",
     "uptime": "正常运行",
     "latency": "延迟",
+    "gatewayLatency": "网关延迟",
+    "serverLatency": "中心服务延迟",
     "avgLatency": "平均延迟",
     "maxLatency": "最大延迟",
     "gaps": "个数据空缺",

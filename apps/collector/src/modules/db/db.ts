@@ -56,7 +56,8 @@ export interface AgentHeartbeat {
   gatewayType?: string;
   gatewayUrl?: string;
   remoteIP?: string;
-  gatewayLatencyMs?: number;
+  gatewayLatencyMs?: number | null;
+  serverLatencyMs?: number | null;
   lastSeen: string;
 }
 
@@ -244,6 +245,22 @@ export class StatsDatabase {
     try {
       this.db.exec(`ALTER TABLE agent_heartbeats ADD COLUMN gateway_latency_ms INTEGER`);
       console.log('[DB] Migration: Added gateway_latency_ms column to agent_heartbeats');
+    } catch {
+      // Column already exists
+    }
+
+    // Migration: Add server_latency_ms column to agent_heartbeats
+    try {
+      this.db.exec(`ALTER TABLE agent_heartbeats ADD COLUMN server_latency_ms INTEGER`);
+      console.log('[DB] Migration: Added server_latency_ms column to agent_heartbeats');
+    } catch {
+      // Column already exists
+    }
+
+    // Migration: Add server_latency_ms column to backend_health_logs
+    try {
+      this.db.exec(`ALTER TABLE backend_health_logs ADD COLUMN server_latency_ms INTEGER`);
+      console.log('[DB] Migration: Added server_latency_ms column to backend_health_logs');
     } catch {
       // Column already exists
     }
@@ -1018,13 +1035,14 @@ export class StatsDatabase {
     gatewayUrl?: string;
     remoteIP?: string;
     gatewayLatencyMs?: number;
+    serverLatencyMs?: number;
     lastSeen?: string;
   }): void {
     const stmt = this.db.prepare(`
       INSERT INTO agent_heartbeats (
-        backend_id, agent_id, hostname, version, gateway_type, gateway_url, remote_ip, gateway_latency_ms, last_seen, updated_at
+        backend_id, agent_id, hostname, version, gateway_type, gateway_url, remote_ip, gateway_latency_ms, server_latency_ms, last_seen, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(backend_id) DO UPDATE SET
         agent_id = excluded.agent_id,
         hostname = COALESCE(excluded.hostname, agent_heartbeats.hostname),
@@ -1033,6 +1051,7 @@ export class StatsDatabase {
         gateway_url = COALESCE(excluded.gateway_url, agent_heartbeats.gateway_url),
         remote_ip = COALESCE(excluded.remote_ip, agent_heartbeats.remote_ip),
         gateway_latency_ms = COALESCE(excluded.gateway_latency_ms, agent_heartbeats.gateway_latency_ms),
+        server_latency_ms = COALESCE(excluded.server_latency_ms, agent_heartbeats.server_latency_ms),
         last_seen = excluded.last_seen,
         updated_at = CURRENT_TIMESTAMP
     `);
@@ -1047,6 +1066,7 @@ export class StatsDatabase {
       input.gatewayUrl || null,
       input.remoteIP || null,
       input.gatewayLatencyMs ?? null,
+      input.serverLatencyMs ?? null,
       lastSeen,
     );
   }
@@ -1062,6 +1082,7 @@ export class StatsDatabase {
         gateway_url as gatewayUrl,
         remote_ip as remoteIP,
         gateway_latency_ms as gatewayLatencyMs,
+        server_latency_ms as serverLatencyMs,
         last_seen as lastSeen
       FROM agent_heartbeats
       WHERE backend_id = ?

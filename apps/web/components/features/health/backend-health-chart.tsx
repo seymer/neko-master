@@ -79,6 +79,8 @@ interface Slot {
   /** always 1 (online) or null (offline/gap) — used when no latency data available */
   online: number | null;
   latency_ms: number | null;
+  gateway_latency_ms: number | null;
+  server_latency_ms: number | null;
   message: string | null;
 }
 
@@ -119,6 +121,8 @@ function buildSlots(
         latency: null,
         online: null,
         latency_ms: null,
+        gateway_latency_ms: null,
+        server_latency_ms: null,
         message: null,
       });
     } else {
@@ -126,12 +130,21 @@ function buildSlots(
       const hasUnknown   = bucketPoints.some((p) => p.status === "unknown");
       const status: HealthStatus = hasUnhealthy ? "unhealthy" : hasUnknown ? "unknown" : "healthy";
 
-      const lats = bucketPoints
+      const gatewayLats = bucketPoints
         .filter((p) => p.latency_ms !== null)
         .map((p) => p.latency_ms as number);
-      const avgLatency = lats.length > 0
-        ? Math.round(lats.reduce((a, b) => a + b, 0) / lats.length)
+      const avgGatewayLatency = gatewayLats.length > 0
+        ? Math.round(gatewayLats.reduce((a, b) => a + b, 0) / gatewayLats.length)
         : null;
+
+      const serverLats = bucketPoints
+        .filter((p) => p.server_latency_ms !== null)
+        .map((p) => p.server_latency_ms as number);
+      const avgServerLatency = serverLats.length > 0
+        ? Math.round(serverLats.reduce((a, b) => a + b, 0) / serverLats.length)
+        : null;
+
+      const avgLatency = avgGatewayLatency !== null ? avgGatewayLatency : avgServerLatency;
 
       const lastMsg = bucketPoints[bucketPoints.length - 1].message ?? null;
 
@@ -142,6 +155,8 @@ function buildSlots(
         latency: status === "healthy" ? avgLatency : null,
         online:  status === "healthy" ? 1 : null,
         latency_ms: avgLatency,
+        gateway_latency_ms: status === "healthy" ? avgGatewayLatency : null,
+        server_latency_ms: status === "healthy" ? avgServerLatency : null,
         message: lastMsg,
       });
     }
@@ -221,7 +236,7 @@ interface BackendHealthChartProps {
   bucketMinutes?: number;
 }
 
-export const BackendHealthChart = React.memo(function BackendHealthChart({
+export function BackendHealthChart({
   history,
   from,
   to,
@@ -234,6 +249,8 @@ export const BackendHealthChart = React.memo(function BackendHealthChart({
     () => buildSlots(from, to, history.points, bucketMinutes),
     [from, to, history.points, bucketMinutes],
   );
+
+  // Debug - moved after variable definitions
 
   const refSpans = useMemo(() => buildRefSpans(resolveGapSlots(slots)), [slots]);
 
@@ -257,10 +274,15 @@ export const BackendHealthChart = React.memo(function BackendHealthChart({
     return { uptimePct, avgLatency, maxLatency, gaps };
   }, [slots]);
 
-  const hasLatency = useMemo(
-    () => history.points.some((p) => p.latency_ms !== null),
-    [history.points],
+  const hasGatewayLatency = useMemo(
+    () => slots.some((s) => s.gateway_latency_ms !== null),
+    [slots],
   );
+  const hasServerLatency = useMemo(
+    () => slots.some((s) => s.server_latency_ms !== null),
+    [slots],
+  );
+  const hasLatency = hasGatewayLatency || hasServerLatency;
 
   const dataKey = hasLatency ? "latency" : "online";
 
@@ -274,7 +296,11 @@ export const BackendHealthChart = React.memo(function BackendHealthChart({
 
   // Tier is driven by max latency in the visible data
   const latencyTier: LatencyTier = getLatencyTier(stats.maxLatency);
-  const strokeColor = hasLatency ? TIER_STROKE[latencyTier] : "#10b981";
+  const gatewayStrokeColor = TIER_STROKE[latencyTier];
+  const serverStrokeColor = "#3b82f6";
+  const strokeColor = hasGatewayLatency ? gatewayStrokeColor : serverStrokeColor;
+
+
 
   const avgLatencyTier: LatencyTier = getLatencyTier(stats.avgLatency);
   const maxLatencyTier: LatencyTier = getLatencyTier(stats.maxLatency);
@@ -331,16 +357,25 @@ export const BackendHealthChart = React.memo(function BackendHealthChart({
             ? "text-rose-500"
             : "text-slate-400";
 
-      const slotLatencyTier = getLatencyTier(slot.latency_ms);
+      const gatewayLatencyTier = getLatencyTier(slot.gateway_latency_ms);
+      const serverLatencyTier = getLatencyTier(slot.server_latency_ms);
 
       return (
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg text-xs space-y-1 min-w-[130px]">
           <p className="text-muted-foreground font-medium">{tooltipTitle}</p>
           <p className={cn("font-semibold", statusClass)}>{statusLabel}</p>
-          {slot.latency_ms !== null && (
-            <p className={cn("flex items-center gap-1", TIER_TEXT[slotLatencyTier])}>
+          {slot.gateway_latency_ms !== null && (
+            <p className={cn("flex items-center gap-1", TIER_TEXT[gatewayLatencyTier])}>
               <Clock className="w-3 h-3" />
-              <span className="tabular-nums font-medium">{slot.latency_ms}ms</span>
+              <span>Gateway:</span>
+              <span className="tabular-nums font-medium">{slot.gateway_latency_ms}ms</span>
+            </p>
+          )}
+          {slot.server_latency_ms !== null && (
+            <p className={cn("flex items-center gap-1", TIER_TEXT[serverLatencyTier])}>
+              <Clock className="w-3 h-3" />
+              <span>Server:</span>
+              <span className="tabular-nums font-medium">{slot.server_latency_ms}ms</span>
             </p>
           )}
           {slot.message && slot.status !== "healthy" && (
@@ -380,6 +415,26 @@ export const BackendHealthChart = React.memo(function BackendHealthChart({
         </p>
         <span className={cn("inline-flex w-2 h-2 rounded-full shrink-0", statusDotClass)} />
       </div>
+
+      {/* Legend for agent mode */}
+      {hasServerLatency && (
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <div className="inline-flex items-center gap-1.5">
+            <span
+              className="inline-flex h-0.5 w-4 rounded-full"
+              style={{ backgroundColor: gatewayStrokeColor }}
+            />
+            <span>Gateway</span>
+          </div>
+          <div className="inline-flex items-center gap-1.5">
+            <span
+              className="inline-flex h-0 w-4 border-t-2 border-dashed"
+              style={{ borderColor: serverStrokeColor }}
+            />
+            <span>Server</span>
+          </div>
+        </div>
+      )}
 
       {/* Stats row — mobile */}
       <div className="grid grid-cols-3 gap-2 lg:hidden">
@@ -503,26 +558,40 @@ export const BackendHealthChart = React.memo(function BackendHealthChart({
             />
             <Tooltip content={<CustomTooltip />} />
 
+            {/* Gateway latency curve - always show if has latency */}
             <Area
               type="monotone"
-              dataKey={dataKey}
-              stroke={strokeColor}
+              dataKey="latency"
+              stroke={gatewayStrokeColor}
               strokeWidth={2}
               fillOpacity={1}
               fill={`url(#colorHealth-${history.backendId})`}
               connectNulls={false}
               isAnimationActive={false}
               dot={false}
+              activeDot={{ r: 3 }}
             />
+            {/* Server latency curve - show only for agent mode */}
+            {hasServerLatency && (
+              <Area
+                type="monotone"
+                dataKey="server_latency_ms"
+                stroke={serverStrokeColor}
+                strokeWidth={2}
+                strokeDasharray="5 4"
+                fill="none"
+                fillOpacity={0}
+                connectNulls={false}
+                isAnimationActive={false}
+                dot={false}
+                activeDot={{ r: 3 }}
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
-},
-  (prev, next) =>
-    prev.history === next.history &&
-    prev.from.getTime() === next.from.getTime() &&
-    prev.to.getTime()   === next.to.getTime() &&
-    prev.bucketMinutes  === next.bucketMinutes,
-);
+}
+// Note: Removed React.memo to ensure real-time updates work correctly
+// The component will re-render when any prop changes

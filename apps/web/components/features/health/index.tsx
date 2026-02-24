@@ -72,7 +72,8 @@ export function HealthContent({ timeRange }: HealthContentProps) {
       for (const p of backend.points) {
         total++;
         if (p.status === "healthy") healthy++;
-        if (p.latency_ms !== null) { latSum += p.latency_ms; latCount++; }
+        const latency = p.latency_ms ?? p.server_latency_ms;
+        if (latency !== null) { latSum += latency; latCount++; }
       }
     }
     return {
