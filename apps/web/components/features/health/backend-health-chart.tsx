@@ -11,9 +11,9 @@ import {
   CartesianGrid,
   ReferenceArea,
 } from "recharts";
+import type { TooltipProps } from "recharts";
 import { Activity, Clock, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { BackendHealthHistory, BackendHealthPoint } from "@/lib/api";
 
@@ -79,9 +79,6 @@ function buildSlots(
 
   while (cursor <= to) {
     const bucketStart = cursor.toISOString().slice(0, 16);
-    const bucketEnd = new Date(cursor.getTime() + bucketMinutes * 60_000)
-      .toISOString()
-      .slice(0, 16);
 
     // Collect all raw points that fall within this bucket
     const bucketPoints: BackendHealthPoint[] = [];
@@ -136,7 +133,6 @@ function buildSlots(
     }
 
     cursor.setMinutes(cursor.getMinutes() + bucketMinutes);
-    void bucketEnd; // suppress unused-var
   }
 
   return slots;
@@ -274,9 +270,9 @@ export const BackendHealthChart = React.memo(function BackendHealthChart({
 
   // ── Tooltip ────────────────────────────────────────────────────────────────
   const CustomTooltip = React.useCallback(
-    ({ active, payload }: any) => {
+    ({ active, payload }: TooltipProps<number, string>) => {
       if (!active || !payload?.length) return null;
-      const slot: Slot = payload[0].payload;
+      const slot = payload[0].payload as Slot;
 
       // Parse the stored ISO minute string as UTC → local, then format like Overview
       const slotDate = new Date(
@@ -350,14 +346,14 @@ export const BackendHealthChart = React.memo(function BackendHealthChart({
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-1">
-      {/* Title row — same pattern as TrafficTrendChart */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-          <Activity className="w-4 h-4" />
+    <div className="space-y-2">
+      {/* Title row */}
+      <div className="flex items-center gap-2">
+        <Activity className="w-4 h-4 text-muted-foreground shrink-0" />
+        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider truncate">
           {history.backendName}
-          <span className={cn("inline-flex w-2 h-2 rounded-full shrink-0", statusDotClass)} />
-        </CardTitle>
+        </p>
+        <span className={cn("inline-flex w-2 h-2 rounded-full shrink-0", statusDotClass)} />
       </div>
 
       {/* Stats row — desktop inline / mobile cards */}

@@ -12,6 +12,7 @@ import type {
   UpdateBackendInput,
   BackendResponse,
   BackendHealthInfo,
+  BackendHealthHistory,
   TestConnectionInput,
   TestConnectionResult,
   CreateBackendResult,
@@ -22,7 +23,6 @@ import { loadClickHouseConfig, runClickHouseQuery } from '../clickhouse/clickhou
 import type { ClickHouseConfig } from '../clickhouse/clickhouse.config.js';
 
 import type { AuthService } from '../auth/auth.service.js';
-import type { HealthLogRow } from '../../database/repositories/health.repository.js';
 
 /**
  * Mask URL for showcase mode - hides host, port, credentials
@@ -167,12 +167,33 @@ export class BackendService {
 
   /**
    * Get health history for all backends (or a single one) over the given UTC ISO range.
+   * Returns data grouped by backend and enriched with backend names.
    */
-  getHealthHistory(fromISO: string, toISO: string, backendId?: number): HealthLogRow[] {
-    if (backendId !== undefined) {
-      return this.db.repos.health.getHealthHistory(backendId, fromISO, toISO);
+  getHealthHistory(fromISO: string, toISO: string, backendId?: number): BackendHealthHistory[] {
+    const rows = backendId !== undefined
+      ? this.db.repos.health.getHealthHistory(backendId, fromISO, toISO)
+      : this.db.repos.health.getHealthHistoryAll(fromISO, toISO);
+
+    const backendMap = new Map(this.getAllBackends().map((b) => [b.id, b.name]));
+    const grouped = new Map<number, BackendHealthHistory>();
+
+    for (const row of rows) {
+      if (!grouped.has(row.backend_id)) {
+        grouped.set(row.backend_id, {
+          backendId: row.backend_id,
+          backendName: backendMap.get(row.backend_id) ?? `Backend ${row.backend_id}`,
+          points: [],
+        });
+      }
+      grouped.get(row.backend_id)!.points.push({
+        time: row.minute,
+        status: row.status,
+        latency_ms: row.latency_ms,
+        message: row.message,
+      });
     }
-    return this.db.repos.health.getHealthHistoryAll(fromISO, toISO);
+
+    return Array.from(grouped.values());
   }
 
   /**

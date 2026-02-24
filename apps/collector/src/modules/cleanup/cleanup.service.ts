@@ -90,9 +90,12 @@ export class CleanupService {
     try {
       // Clean up old connection logs
       const logsDeleted = this.cleanupConnectionLogs();
-      
+
       // Clean up old hourly stats
       const hourlyDeleted = this.cleanupHourlyStats();
+
+      // Clean up old health logs (same retention as hourly stats)
+      this.cleanupHealthLogs();
 
       // Vacuum database to reclaim space (only if significant data deleted)
       const totalDeleted = logsDeleted + hourlyDeleted;
@@ -120,6 +123,14 @@ export class CleanupService {
     const cutoff = cutoffDate.toISOString();
 
     return this.db.deleteOldMinuteStats(cutoff);
+  }
+
+  /**
+   * Clean up old health logs (retention matches hourly stats)
+   */
+  private cleanupHealthLogs(): void {
+    const config = this.getConfig();
+    this.db.repos.health.pruneOldLogs(config.hourlyStatsDays);
   }
 
   /**

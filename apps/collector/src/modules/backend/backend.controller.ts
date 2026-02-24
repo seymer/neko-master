@@ -186,43 +186,21 @@ const backendController: FastifyPluginAsync = async (fastify: FastifyInstance): 
   // Get health history for all (or a specific) backend
   fastify.get<{ Querystring: { from?: string; to?: string; backendId?: string } }>(
     '/health/history',
-    async (request) => {
+    async (request, reply) => {
       const { from, to, backendId } = request.query;
 
-      // Default to last 24 hours if not provided
       const toISO = (to ?? new Date().toISOString()).slice(0, 16);
       const fromISO = (from ?? new Date(Date.now() - 24 * 3600_000).toISOString()).slice(0, 16);
 
-      const parsedBackendId = backendId ? parseInt(backendId, 10) : undefined;
-      const rows = service.getHealthHistory(fromISO, toISO, parsedBackendId);
-
-      // Group by backend and enrich with backend name
-      const backends = service.getAllBackends();
-      const backendMap = new Map(backends.map((b) => [b.id, b.name]));
-
-      const grouped = new Map<number, {
-        backendId: number;
-        backendName: string;
-        points: Array<{ time: string; status: string; latency_ms: number | null; message: string | null }>;
-      }>();
-
-      for (const row of rows) {
-        if (!grouped.has(row.backend_id)) {
-          grouped.set(row.backend_id, {
-            backendId: row.backend_id,
-            backendName: backendMap.get(row.backend_id) ?? `Backend ${row.backend_id}`,
-            points: [],
-          });
+      let parsedBackendId: number | undefined;
+      if (backendId !== undefined) {
+        parsedBackendId = parseInt(backendId, 10);
+        if (Number.isNaN(parsedBackendId)) {
+          return reply.status(400).send({ error: 'Invalid backendId' });
         }
-        grouped.get(row.backend_id)!.points.push({
-          time: row.minute,
-          status: row.status,
-          latency_ms: row.latency_ms,
-          message: row.message,
-        });
       }
 
-      return Array.from(grouped.values());
+      return service.getHealthHistory(fromISO, toISO, parsedBackendId);
     },
   );
 

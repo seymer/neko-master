@@ -205,7 +205,7 @@ export function HealthContent({ timeRange }: HealthContentProps) {
         <div className="space-y-4">
           {data.map((backend) => (
             <Card key={backend.backendId}>
-              <CardContent className="px-5 pt-4 pb-3">
+              <CardContent className="px-4 pt-3 pb-2">
                 <BackendHealthChart
                   history={backend}
                   from={from}

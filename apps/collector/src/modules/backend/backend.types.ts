@@ -89,3 +89,16 @@ export interface RotateAgentTokenResult {
   message: string;
   agentToken: string;
 }
+
+export interface BackendHealthPoint {
+  time: string;
+  status: 'healthy' | 'unhealthy' | 'unknown';
+  latency_ms: number | null;
+  message: string | null;
+}
+
+export interface BackendHealthHistory {
+  backendId: number;
+  backendName: string;
+  points: BackendHealthPoint[];
+}

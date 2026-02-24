@@ -503,6 +503,7 @@ export const INDEXES = [
 
   // Backend health log indexes
   `CREATE INDEX IF NOT EXISTS idx_backend_health_logs_backend_minute ON backend_health_logs(backend_id, minute);`,
+  `CREATE INDEX IF NOT EXISTS idx_backend_health_logs_minute ON backend_health_logs(minute);`,
 
   // Surge policy cache indexes
   `CREATE INDEX IF NOT EXISTS idx_surge_policy_backend ON surge_policy_cache(backend_id);`,

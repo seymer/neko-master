@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-02-24
+
+### Added
+
+- **Backend Health Monitoring Tab** 🏥
+  - New dedicated Health tab for historical health status visualization across all configured backends
+  - Per-backend time-series area chart: latency curve for Direct mode, online/offline status for Agent mode
+  - Unhealthy and unknown periods are shaded red/amber; interior data gaps (between first and last recorded point) are automatically treated as downtime, while leading/trailing gaps remain blank
+  - Multi-range support (1h / 6h / 12h / 24h / 7d / 30d) with axis label format auto-switching (time-only / month+time / date-only) based on span
+  - Six summary stat cards at the top: overall uptime %, healthy backends, unhealthy backends, total backends, avg latency, bucket granularity — visual style aligned with the Overview tab
+  - Health check interval defaults to 30 seconds (min 5 s), configurable via `BACKEND_HEALTH_CHECK_INTERVAL_MS`
+  - New `backend_health_logs` table keyed on `(backend_id, minute)`; multiple checks within the same minute are UPSERT-deduplicated; logs are automatically pruned on a 30-day retention schedule alongside hourly stats
+  - Health history API supports filtering by `backendId`; data is grouped by backend and enriched with names in the service layer, keeping the controller as a thin routing layer
+- **Country traffic connection counting**
+  - Country traffic statistics now include a connections dimension; the Country Traffic panel supports sort-by-connections
+  - Agent report payloads include an explicit `connections` field with legacy-compatible fallback
+- **Time range preset expansion**
+  - `5m` and `30m` quick presets are now available in production environments
+
+### Changed
+
+- **Traffic collection connection counting aligned**
+  - Both Agent and Direct modes now count connections once per flush interval, eliminating duplicate increments
+  - Removed the connection count accumulation side-effect from the legacy `requeueFront` retry path
+- **Case normalization function compatibility**
+  - `tr`-based character class conversions replaced with explicit character lists for consistent cross-platform behavior
+
 ## [1.3.2] - 2026-02-22
 
 ### Added
