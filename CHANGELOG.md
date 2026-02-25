@@ -5,7 +5,35 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
-## [未发布]
+## [1.3.4] - 2026-02-26
+
+### 新增
+
+- **后端健康监控增强** 🏥
+  - Agent 现在向 collector 上报网关延迟，用于健康监控
+  - 新增 `nekoagent restart-all` 命令，可一键重启所有 Agent 实例
+  - 后端健康状态支持显式状态标识（healthy/unhealthy/unknown）
+  - 健康图表根据延迟自动着色：低延迟为绿色、中等延迟为黄色、高延迟为红色
+  - Direct 模式后端显示延迟曲线，Agent 模式后端显示在线/离线状态
+  - 网关延迟计算算法优化，图表标签本地化（中文/英文）
+
+- **Agent 开机自启动** 🚀
+  - 安装脚本新增系统服务管理器支持，可实现 Agent 开机自动启动
+  - 支持 systemd（Linux 主流发行版）、launchd（macOS）、OpenWrt procd、cron（通用）
+  - 安装时自动检测系统类型并配置相应的服务
+  - 可通过 `--no-autostart` 禁用自动启动
+
+- **WebSocket 性能优化** ⚡
+  - 新增 `includeSummary` 参数，支持按需获取 WebSocket 统计摘要
+  - 实现选择性摘要字段检索，大幅减少不必要的数据传输
+  - `useStableTimeRange` 时间范围取整到分钟，避免边界抖动
+  - 实现细粒度摘要数据获取和客户端缓存机制
+  - 规则标签页（Rules Tab）新增顶部汇总统计卡片
+
+### 变更
+
+- 优化 `tr` 命令字符集转换，提升跨平台兼容性
+- 修复管理脚本重复同步问题
 
 ## [1.3.3] - 2026-02-24
 

@@ -5,7 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.4] - 2026-02-26
+
+### Added
+
+- **Enhanced Backend Health Monitoring** 🏥
+  - Agents now report gateway latency to the collector for improved health monitoring
+  - New `nekoagent restart-all` command to restart all Agent instances with one command
+  - Backend health status now supports explicit state identifiers (healthy/unhealthy/unknown)
+  - Health charts now auto-color based on latency: green for low, yellow for medium, red for high
+  - Direct mode backends display latency curves; Agent mode backends display online/offline status
+  - Gateway latency calculation algorithm optimized, chart labels localized (Chinese/English)
+
+- **Agent Auto-Start on Boot** 🚀
+  - Install script now supports system service managers for automatic Agent startup on boot
+  - Supports systemd (Linux mainstream distros), launchd (macOS), OpenWrt procd, cron (universal)
+  - Automatically detects system type and configures the appropriate service during installation
+  - Auto-start can be disabled with `--no-autostart` flag
+
+- **WebSocket Performance Optimization** ⚡
+  - New `includeSummary` parameter for WebSocket stats to enable on-demand summary retrieval
+  - Selective summary field retrieval reduces unnecessary data transmission
+  - `useStableTimeRange` now rounds to the nearest minute to avoid boundary jitter
+  - Granular summary data fetching with client-side caching mechanism
+  - Rules Tab now displays top summary stat cards
+
+### Changed
+
+- Optimized `tr` command character set conversion for improved cross-platform compatibility
+- Fixed redundant manager file synchronization issue
 
 ## [1.3.3] - 2026-02-24
 
