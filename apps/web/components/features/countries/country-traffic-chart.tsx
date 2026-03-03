@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CountryFlag } from "./country-flag";
 import { formatBytes, formatNumber } from "@/lib/utils";
+import { useCountryName } from "@/lib/i18n-country";
 import type { CountryStats } from "@neko-master/shared";
 
 interface CountryTrafficChartProps {
@@ -33,11 +34,12 @@ function getContinentColor(continent: string): string {
 export function CountryTrafficChart({ data }: CountryTrafficChartProps) {
   const t = useTranslations("countries");
   const mapT = useTranslations("map");
+  const countryName = useCountryName();
 
   const chartData = useMemo(() => {
     if (!data) return [];
     return data.map((country) => ({
-      name: country.countryName || country.country,
+      name: countryName(country.country),
       code: country.country,
       value: country.totalDownload + country.totalUpload,
       download: country.totalDownload,
@@ -46,7 +48,7 @@ export function CountryTrafficChart({ data }: CountryTrafficChartProps) {
       continent: country.continent,
       color: getContinentColor(country.continent),
     }));
-  }, [data]);
+  }, [data, countryName]);
 
   const totalTraffic = useMemo(() => {
     return chartData.reduce((sum, item) => sum + item.value, 0);

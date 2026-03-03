@@ -2,11 +2,12 @@
 
 import React, { useMemo } from "react";
 import { Globe, ArrowRight, BarChart3, Link2 } from "lucide-react";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { CountryFlag } from "@/components/features/countries";
 import { formatBytes, formatNumber, cn } from "@/lib/utils";
 import { useResponsiveItemCount } from "@/lib/hooks/use-responsive-item-count";
+import { useCountryName } from "@/lib/i18n-country";
 import type { CountryStats } from "@neko-master/shared";
 
 interface TopCountriesSimpleProps {
@@ -17,33 +18,6 @@ interface TopCountriesSimpleProps {
   isLoading?: boolean;
 }
 
-const countryNamesEn: Record<string, string> = {
-  "CN": "China", "US": "United States", "JP": "Japan", "HK": "Hong Kong", "TW": "Taiwan",
-  "SG": "Singapore", "KR": "South Korea", "DE": "Germany", "GB": "United Kingdom", "FR": "France",
-  "NL": "Netherlands", "CA": "Canada", "AU": "Australia", "IN": "India", "RU": "Russia",
-  "BR": "Brazil", "TR": "Turkey", "VN": "Vietnam", "TH": "Thailand", "ID": "Indonesia",
-  "MY": "Malaysia", "PH": "Philippines", "SE": "Sweden", "CH": "Switzerland", "IT": "Italy",
-  "ES": "Spain", "PT": "Portugal", "PL": "Poland", "UA": "Ukraine", "MX": "Mexico",
-  "AR": "Argentina", "CL": "Chile", "ZA": "South Africa", "AE": "UAE", "SA": "Saudi Arabia",
-  "LOCAL": "Local", "UNKNOWN": "Unknown", "PRIVATE": "Private",
-};
-
-const countryNamesZh: Record<string, string> = {
-  "CN": "中国", "US": "美国", "JP": "日本", "HK": "中国香港", "TW": "中国台湾",
-  "SG": "新加坡", "KR": "韩国", "DE": "德国", "GB": "英国", "FR": "法国",
-  "NL": "荷兰", "CA": "加拿大", "AU": "澳大利亚", "IN": "印度", "RU": "俄罗斯",
-  "BR": "巴西", "TR": "土耳其", "VN": "越南", "TH": "泰国", "ID": "印度尼西亚",
-  "MY": "马来西亚", "PH": "菲律宾", "SE": "瑞典", "CH": "瑞士", "IT": "意大利",
-  "ES": "西班牙", "PT": "葡萄牙", "PL": "波兰", "UA": "乌克兰", "MX": "墨西哥",
-  "AR": "阿根廷", "CL": "智利", "ZA": "南非", "AE": "阿联酋", "SA": "沙特阿拉伯",
-  "LOCAL": "本地", "UNKNOWN": "未知", "PRIVATE": "私有",
-};
-
-function getCountryName(code: string, locale: string): string {
-  const names = locale === "zh" ? countryNamesZh : countryNamesEn;
-  return names[code.toUpperCase()] || code;
-}
-
 export const TopCountriesSimple = React.memo(function TopCountriesSimple({
   countries,
   sortBy,
@@ -52,7 +26,7 @@ export const TopCountriesSimple = React.memo(function TopCountriesSimple({
   isLoading,
 }: TopCountriesSimpleProps) {
   const t = useTranslations("topCountries");
-  const locale = useLocale();
+  const countryName = useCountryName();
   const itemCount = useResponsiveItemCount();
 
   const sortedCountries = useMemo(() => {
@@ -149,8 +123,8 @@ export const TopCountriesSimple = React.memo(function TopCountriesSimple({
                   {index + 1}
                 </span>
                 <CountryFlag country={country.country} className="h-3.5 w-5" />
-                <span className="flex-1 text-sm font-medium truncate" title={getCountryName(country.country, locale)}>
-                  {getCountryName(country.country, locale)}
+                <span className="flex-1 text-sm font-medium truncate" title={countryName(country.country)}>
+                  {countryName(country.country)}
                 </span>
                 <span className="text-sm font-bold tabular-nums shrink-0">
                   {formatBytes(total)}

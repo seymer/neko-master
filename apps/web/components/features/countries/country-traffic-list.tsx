@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Link2 } from "lucide-react";
 import { CountryFlag } from "./country-flag";
 import { formatBytes, formatNumber } from "@/lib/utils";
+import { useCountryName } from "@/lib/i18n-country";
 import type { CountryStats } from "@neko-master/shared";
 
 interface CountryTrafficListProps {
@@ -26,6 +27,7 @@ export function CountryTrafficList({
   data,
   sortBy = "traffic",
 }: CountryTrafficListProps) {
+  const countryName = useCountryName();
   const countries = useMemo(() => {
     if (!data) return [];
     return data
@@ -70,8 +72,8 @@ export function CountryTrafficList({
             {/* Header: Flag + Name + Total */}
             <div className="flex items-center gap-2 mb-2">
               <CountryFlag country={country.country} className="h-4 w-6" />
-              <p className="flex-1 font-medium text-sm truncate" title={country.countryName || country.country}>
-                {country.countryName || country.country}
+              <p className="flex-1 font-medium text-sm truncate" title={countryName(country.country)}>
+                {countryName(country.country)}
               </p>
               <span className="text-base font-bold tabular-nums whitespace-nowrap shrink-0 sm:hidden">
                 {formatBytes(country.total)}

@@ -49,6 +49,7 @@ import {
   type IPSortKey,
   type SortOrder,
 } from "@/lib/stats-utils";
+import { useCountryName } from "@/lib/i18n-country";
 import { normalizeGeoIP } from "@neko-master/shared";
 import type { IPStats } from "@neko-master/shared";
 
@@ -109,6 +110,7 @@ export function IPStatsTable({
   contextKey,
 }: IPStatsTableProps) {
   const t = useTranslations("ips");
+  const localizedName = useCountryName();
   const detailTimeRange = useStableTimeRange(timeRange);
   const isRemoteMode = mode === "remote";
 
@@ -433,7 +435,7 @@ export function IPStatsTable({
                 const isDesktopExpanded = expandedIP === ip.ip;
                 const isMobileActive = mobileDetailsOpen && mobileDetailIP?.ip === ip.ip;
                 const geo = normalizeGeoIP(ip.geoIP);
-                const locationName = geo?.countryName || geo?.countryCode || null;
+                const locationName = geo?.countryCode ? localizedName(geo.countryCode) : null;
 
                 return (
                   <div key={ip.ip} className="group">

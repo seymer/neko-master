@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.5] - 2026-03-03
+
+### Added
+
+- **WebSocket Summary Data Enhancement** 📊
+  - WebSocket broadcasts now include total proxy count and rule count in summary data
+  - Refined dashboard data fetching strategy during active WebSocket connections
+- **Responsive Overview List Display** 📐
+  - New `useResponsiveItemCount` hook dynamically adjusts list item count based on viewport height
+  - Top Domains card now includes traffic progress bars for visual proportion display
+- **Country/Region Name Internationalization** 🌍
+  - Replaced manually-maintained country name mappings with `Intl.DisplayNames` API, supporting localized names for all 249 ISO country codes
+  - All region-related panels (overview, top list, traffic list, pie chart, world map, IP details) now display correctly localized country names
+  - Custom name overrides for specific regions ensure consistent display across different browser/OS CLDR versions
+- **New Logo** 🎨
+
+### Fixed
+
+- **Rules statistics not showing** 🐛
+  - Fixed Dashboard displaying 0 for total rules and total proxies after the 1.3.4 WebSocket summary optimization
+  - Root cause: `totalProxies`/`totalRules` were previously derived from `proxyStats`/`ruleStats` array lengths, but the summary optimization skipped fetching these arrays
+  - Fix: moved both counts into the WebSocket summary cache so they are always available
+- **Dashboard stuck in loading state during WebSocket connection**
+  - Fixed Dashboard showing infinite transition animation when WebSocket was in `connecting` state
+  - Refined `isTransitioning` logic to only show loading state when HTTP fallback data fetching is actually needed
+- **Settings toggle switch jitter** ⚡
+  - Fixed the Collect toggle and Active backend switch causing the entire backend list to flash with skeleton loading
+  - Changed to silent data refresh, avoiding unnecessary full re-renders
+- **Desktop dropdown menu scrollbar flicker**
+  - Fixed layout shift caused by scrollbar appearing/disappearing when opening dropdown menus, dialogs, or theme switcher
+  - Scrollbar space reservation now only applies on desktop (`pointer: fine`), preserving correct Radix popover positioning on mobile
+
 ## [1.3.4] - 2026-02-26
 
 ### Added

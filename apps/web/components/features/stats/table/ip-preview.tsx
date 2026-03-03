@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CountryFlag } from "@/components/features/countries/country-flag";
 import { cn } from "@/lib/utils";
+import { useCountryName } from "@/lib/i18n-country";
 import { normalizeGeoIP, type GeoIPInfo } from "@neko-master/shared";
 
 interface IPPreviewProps {
@@ -48,12 +49,12 @@ export function IPPreview({
 
   const geo = normalizeGeoIP(geoIP);
   const countryCode = geo?.countryCode;
-  const countryName = geo?.countryName;
+  const localizedName = useCountryName();
   const city = geo?.city || unavailableLabel;
   const asOrganization = geo?.asOrganization || unavailableLabel;
   const asnValue = asn || unavailableLabel;
-  const hasLocation = Boolean(countryCode || countryName);
-  const displayLocation = countryName || countryCode || unavailableLabel;
+  const hasLocation = Boolean(countryCode);
+  const displayLocation = countryCode ? localizedName(countryCode) : unavailableLabel;
 
   useEffect(() => {
     return () => {

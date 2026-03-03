@@ -774,8 +774,8 @@ export function BackendConfigDialog({
     }
   }, [open]);
 
-  const loadBackends = async () => {
-    setBackendsLoading(true);
+  const loadBackends = async (silent = false) => {
+    if (!silent) setBackendsLoading(true);
     try {
       const data = await api.getBackends();
       // Parse URL for display/form rendering
@@ -798,7 +798,7 @@ export function BackendConfigDialog({
     } catch (error) {
       console.error("Failed to load backends:", error);
     } finally {
-      setBackendsLoading(false);
+      if (!silent) setBackendsLoading(false);
     }
   };
 
@@ -1131,7 +1131,7 @@ export function BackendConfigDialog({
     try {
       await api.setActiveBackend(id);
       // Refresh local backend list to update UI (active state, eye icon)
-      await loadBackends();
+      await loadBackends(true);
       // Notify parent to refresh dashboard data
       await onBackendChange?.();
       // Show toast notification
@@ -1145,7 +1145,7 @@ export function BackendConfigDialog({
   const handleToggleListening = async (id: number, listening: boolean) => {
     try {
       await api.setBackendListening(id, listening);
-      await loadBackends();
+      await loadBackends(true);
       await onBackendChange?.();
     } catch (error: any) {
       setErrorMessage(error.message || "Failed to update listening state");

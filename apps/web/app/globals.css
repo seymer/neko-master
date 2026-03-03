@@ -143,10 +143,6 @@
   * {
     @apply border-border outline-ring/50;
   }
-  html {
-    /* Prevent layout shift when scrollbar appears/disappears */
-    scrollbar-gutter: stable;
-  }
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
@@ -169,15 +165,24 @@
     background-attachment: fixed;
   }
 
-  /* Prevent Radix UI scroll-lock from causing layout shift */
-  /* scrollbar-gutter: stable already reserves space, so we override Radix's compensation */
-  html[data-scroll-locked] {
-    margin-right: 0 !important;
-  }
+  /* Desktop only: prevent layout shift from classic (non-overlay) scrollbar */
+  /* Mobile/tablet uses overlay scrollbars that don't affect layout, so skip */
+  @media (pointer: fine) {
+    html {
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
 
-  body[data-scroll-locked] {
-    padding-right: 0 !important;
-    margin-right: 0 !important;
+    /* Override Radix scroll-lock compensation — scrollbar space is already reserved */
+    html[data-scroll-locked] {
+      overflow-y: scroll !important;
+      margin-right: 0 !important;
+    }
+
+    body[data-scroll-locked] {
+      padding-right: 0 !important;
+      margin-right: 0 !important;
+    }
   }
 }
 

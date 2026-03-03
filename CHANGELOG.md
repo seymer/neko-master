@@ -5,6 +5,38 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
+## [1.3.5] - 2026-03-03
+
+### 新增
+
+- **WebSocket 摘要数据增强** 📊
+  - WebSocket 推送新增代理节点总数和规则总数摘要字段
+  - 优化 Dashboard 在 WebSocket 连接期间的数据获取策略
+- **概览列表自适应展示** 📐
+  - 新增 `useResponsiveItemCount` Hook，根据窗口高度自动计算列表显示条目数
+  - Top Domains 卡片新增流量进度条，直观展示各域名流量占比
+- **国家/地区名称国际化** 🌍
+  - 使用 `Intl.DisplayNames` API 替代手动维护的国家名称映射，支持全部 249 个 ISO 国家代码的本地化翻译
+  - 中文界面下所有地区板块（概览、排行、列表、饼图、世界地图、IP 详情）均正确显示中文国家名
+  - 支持自定义名称覆盖，确保跨浏览器/系统版本显示一致
+- **新 Logo** 🎨
+
+### 修复
+
+- **规则统计不显示** 🐛
+  - 修复 1.3.4 WebSocket 摘要优化后，规则总数和代理总数在 Dashboard 上显示为 0 的问题
+  - 原因：`totalProxies`/`totalRules` 原先从 `proxyStats`/`ruleStats` 数组长度计算，但摘要优化跳过了这些数组的获取
+  - 修复方式：将这两个计数纳入 WebSocket 摘要缓存，确保始终可用
+- **Dashboard 在 WebSocket 连接中卡在加载状态**
+  - 修复 WebSocket 处于 `connecting` 状态时 Dashboard 无限显示过渡动画的问题
+  - 优化 `isTransitioning` 判断逻辑，仅在确实需要 HTTP 回退获取数据时显示加载状态
+- **Settings 开关切换抖动** ⚡
+  - 修复切换 Collect 开关和 Active 节点时整个后端列表闪烁骨架屏的问题
+  - 改为静默刷新数据，避免不必要的全量重渲染
+- **桌面端下拉菜单滚动条闪烁**
+  - 修复打开下拉菜单、弹窗、主题切换时页面滚动条出现/消失导致的布局跳动
+  - 仅在桌面端（`pointer: fine`）应用滚动条空间预留，不影响移动端 Radix 弹出层定位
+
 ## [1.3.4] - 2026-02-26
 
 ### 新增

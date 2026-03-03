@@ -7,6 +7,7 @@ import { CountryFlag } from "./country-flag";
 import { OverviewCard } from "@/components/common";
 import { TopListItem } from "@/components/common";
 import { Button } from "@/components/ui/button";
+import { useCountryName } from "@/lib/i18n-country";
 import type { CountryStats } from "@neko-master/shared";
 
 interface CountryTopListProps {
@@ -28,6 +29,7 @@ function getContinentColor(continent: string): string {
 export function CountryTopList({ data, limit = 7, onViewAll }: CountryTopListProps) {
   const t = useTranslations("topCountries");
   const countriesT = useTranslations("countries");
+  const countryName = useCountryName();
 
   const { countries, totalTraffic } = useMemo(() => {
     if (!data) return { countries: [], totalTraffic: 0 };
@@ -71,7 +73,7 @@ export function CountryTopList({ data, limit = 7, onViewAll }: CountryTopListPro
             key={country.country}
             rank={index + 1}
             icon={<CountryFlag country={country.country} className="h-4 w-6" />}
-            title={country.countryName || country.country}
+            title={countryName(country.country)}
             subtitle={country.continent}
             value={country.total}
             total={totalTraffic}

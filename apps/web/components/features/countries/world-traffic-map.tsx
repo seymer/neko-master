@@ -12,6 +12,7 @@ import { Globe, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatBytes, formatNumber } from "@/lib/utils";
+import { useCountryName } from "@/lib/i18n-country";
 import type { CountryStats } from "@neko-master/shared";
 
 interface WorldTrafficMapProps {
@@ -47,6 +48,7 @@ const COUNTRY_NAME_MAPPING: Record<string, string> = {
 
 export function WorldTrafficMap({ data }: WorldTrafficMapProps) {
   const t = useTranslations("map");
+  const countryName = useCountryName();
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const [tooltipData, setTooltipData] = useState<{
     country: string;
@@ -123,7 +125,7 @@ export function WorldTrafficMap({ data }: WorldTrafficMapProps) {
     if (countryData && countryData.country !== "LOCAL") {
       const rect = event.target.getBoundingClientRect();
       setTooltipData({
-        country: countryData.countryName || countryData.country,
+        country: countryName(countryData.country),
         traffic: countryData.totalDownload + countryData.totalUpload,
         download: countryData.totalDownload,
         upload: countryData.totalUpload,
@@ -296,7 +298,7 @@ export function WorldTrafficMap({ data }: WorldTrafficMapProps) {
                     style={{ backgroundColor: colorScale(traffic) }}
                   />
                   <span className="text-muted-foreground">
-                    {country.countryName || country.country}
+                    {countryName(country.country)}
                   </span>
                   <span className="font-medium">{formatBytes(traffic)}</span>
                 </div>

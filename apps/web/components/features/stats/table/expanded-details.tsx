@@ -7,6 +7,7 @@ import { Favicon } from "@/components/common";
 import { DomainPreview } from "@/components/features/domains";
 import { getDomainColor, getIPGradient } from "@/lib/stats-utils";
 import { formatBytes, formatNumber } from "@/lib/utils";
+import { useCountryName } from "@/lib/i18n-country";
 import { normalizeGeoIP } from "@neko-master/shared";
 import type { DomainStats, IPStats, ProxyTrafficStats } from "@neko-master/shared";
 
@@ -329,6 +330,8 @@ export function DomainExpandedDetails({
   showProxyTraffic = true,
   showFullProxyChains = false,
 }: DomainExpandedDetailsProps) {
+  const localizedName = useCountryName();
+
   if (!richExpand) {
     return (
       <div className="px-4 sm:px-5 pb-4 bg-secondary/5">
@@ -387,7 +390,7 @@ export function DomainExpandedDetails({
               {ipDetails.map((ipStat) => {
                 const geo = normalizeGeoIP(ipStat.geoIP);
                 const country = geo?.countryCode;
-                const location = geo?.countryName || geo?.countryCode || null;
+                const location = geo?.countryCode ? localizedName(geo.countryCode) : null;
                 const ipTraffic = ipStat.totalDownload + ipStat.totalUpload;
                 const percent = totalIPTraffic > 0 ? (ipTraffic / totalIPTraffic) * 100 : 0;
                 const downloadPercent = ipTraffic > 0 ? (ipStat.totalDownload / ipTraffic) * 100 : 0;
@@ -458,15 +461,15 @@ export function IPExpandedDetails({
   const AssociatedDomainsTitleIcon = associatedDomainsIcon === "globe" ? Globe : Link2;
   const domainsT = useTranslations("domains");
   const ipsT = useTranslations("ips");
+  const localizedName = useCountryName();
 
   const geo = normalizeGeoIP(ip.geoIP);
   const countryCode = geo?.countryCode;
-  const countryName = geo?.countryName;
   const city = geo?.city || ipsT("unknown");
   const asOrganization = geo?.asOrganization || ipsT("unknown");
   const asnValue = ip.asn || ipsT("unknown");
-  const hasLocation = Boolean(countryCode || countryName);
-  const displayLocation = countryName || countryCode || ipsT("unknown");
+  const hasLocation = Boolean(countryCode);
+  const displayLocation = countryCode ? localizedName(countryCode) : ipsT("unknown");
 
   const ipLookupDetails = showIPLookupDetails ? (
     <div className="px-1">
@@ -478,7 +481,7 @@ export function IPExpandedDetails({
           </p>
           {hasLocation ? (
             <span className="mt-1.5 flex min-w-0 items-center gap-1.5">
-              <CountryFlag country={countryCode || countryName || "UN"} className="h-3.5 w-5" />
+              <CountryFlag country={countryCode || "UN"} className="h-3.5 w-5" />
               <span className="truncate text-sm font-medium leading-5">{displayLocation}</span>
             </span>
           ) : (
