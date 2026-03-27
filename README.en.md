@@ -350,6 +350,33 @@ Or configure via Surge's graphical interface:
 
 > 💡 **Note**: Surge uses HTTP polling to fetch data (compared to Clash's WebSocket real-time stream), with a data refresh delay of approximately 2 seconds.
 
+### Connect Mikrotik
+
+Neko Master supports connecting to Mikrotik routers via Agent mode for connection tracking and traffic analysis.
+
+#### 1. Enable RouterOS REST API
+
+Ensure your Mikrotik device is running RouterOS v7 or higher (v7+ natively supports REST API), and the `www` or `www-ssl` service is active under `IP -> Services`.
+
+- **API Endpoint**: `http://<Router-IP>/rest` or `https://<Router-IP>/rest`
+- **Authentication**: Usage requires a username and password with read permissions, formatted as `username:password`
+
+#### 2. Add Mikrotik Backend to Neko Master
+
+Mikrotik currently only supports data fetching via **Agent Mode**:
+
+1. Open the Neko Master Control Panel and navigate to "Settings"
+2. Click "Add Backend"
+3. In the dialog, fill in the connection profile:
+   - **Name**: A custom title (e.g., "Mikrotik Home")
+   - **Mode**: Select "Agent Mode"
+   - **Type**: Select `Mikrotik`
+   - **Gateway Host**: The router's IP address (e.g., `192.168.88.1`)
+   - **Gateway Port**: The REST API port (default is `80` or `443`)
+   - **Gateway Token**: Enter the RouterOS account credentials. The format MUST be `username:password` (e.g., `admin:123456`)
+4. Save the configuration, then click "View Installation Commands" to copy the generated Agent one-click install script.
+5. In your local network (e.g., on a Linux machine, Raspberry Pi, or OpenWrt router), run the generated script to begin pushing traffic data.
+
 ## 🔧 Port Conflict Resolution
 
 If you see "port already in use" error, here are the solutions:

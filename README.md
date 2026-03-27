@@ -341,6 +341,33 @@ http-api-web-dashboard = true
 
 > 💡 **注意**: Surge 使用 HTTP 轮询方式获取数据（相比 Clash 的 WebSocket 实时流），数据刷新延迟约 2 秒。
 
+### 接入 Mikrotik
+
+Neko Master 支持通过 Agent 模式接入 Mikrotik 路由器，实现连接追踪和流量分析。
+
+#### 1. 开启 RouterOS REST API
+
+确保你的 Mikrotik 设备运行在 RouterOS v7 或以上版本（v7+ 原生支持 REST API），并确保 `www` 或 `www-ssl` 服务已在 `IP -> Services` 中开启。
+
+- **接口地址**: `http://<路由器IP>/rest` 或 `https://<路由器IP>/rest`
+- **认证方式**: 使用具备读取权限的用户名和密码，格式为 `用户名:密码`
+
+#### 2. 在 Neko Master 中添加 Mikrotik 后端
+
+Mikrotik 当前仅支持通过 **Agent 模式** 获取数据：
+
+1. 打开 Neko Master 面板「设置」对话框
+2. 点击「添加后端」
+3. 在弹出的配置填写连接信息：
+   - **名称**: 自定义名称（如 "Mikrotik Home"）
+   - **模式**: 选择 `作为被动接收端 (Agent 模式)`
+   - **类型**: 选择 `Mikrotik`
+   - **网关地址**: 路由器的 IP 地址（如 `192.168.88.1`）
+   - **网关端口**: REST API 监听端口（默认 `80` 或 `443`）
+   - **网关 Token**: 填写 RouterOS 的账户及密码，格式必须为 `用户名:密码`（如 `admin:123456`）
+4. 保存配置后，点击「查看安装命令」，复制针对 Agent 端的一键安装脚本。
+5. 在网络内任意支持运行 Agent 的节点上执行复制出的安装脚本，开始拉取与推送流量。
+
 ## 🔧 端口冲突解决
 
 如果看到错误提示端口已被占用，有以下几种解决方案：
