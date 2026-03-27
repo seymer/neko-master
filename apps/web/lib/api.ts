@@ -137,7 +137,7 @@ export interface Backend {
   name: string;
   url: string;
   token: string;
-  type?: 'clash' | 'surge';
+  type?: 'clash' | 'surge' | 'mikrotik';
   enabled: boolean;
   is_active: boolean;
   listening: boolean;
@@ -182,7 +182,7 @@ export interface GatewayRule {
 export interface GatewayRulesResponse {
   rules: GatewayRule[];
   // Surge specific fields
-  _source?: 'surge' | 'clash' | 'agent-cache';
+  _source?: 'surge' | 'clash' | 'mikrotik' | 'agent-cache';
   _availablePolicies?: string[];
 }
 
@@ -538,10 +538,10 @@ export const api = {
   getBackends: () =>
     fetchJson<Backend[]>(`${API_BASE}/backends`),
     
-  createBackend: (backend: { name: string; url: string; token?: string; type?: 'clash' | 'surge' }) =>
+  createBackend: (backend: { name: string; url: string; token?: string; type?: 'clash' | 'surge' | 'mikrotik' }) =>
     fetchJson<{ id: number; isActive?: boolean; message: string; agentToken?: string }>(`${API_BASE}/backends`, 'POST', backend),
     
-  updateBackend: (id: number, backend: { name?: string; url?: string; token?: string; type?: 'clash' | 'surge'; enabled?: boolean; listening?: boolean }) =>
+  updateBackend: (id: number, backend: { name?: string; url?: string; token?: string; type?: 'clash' | 'surge' | 'mikrotik'; enabled?: boolean; listening?: boolean }) =>
     fetchJson<{ message: string }>(`${API_BASE}/backends/${id}`, 'PUT', backend),
     
   deleteBackend: (id: number) =>
@@ -556,7 +556,7 @@ export const api = {
   clearBackendData: (id: number) =>
     fetchJson<{ message: string }>(`${API_BASE}/backends/${id}/clear-data`, 'POST'),
     
-  testBackend: (url: string, token?: string, type?: 'clash' | 'surge') =>
+  testBackend: (url: string, token?: string, type?: 'clash' | 'surge' | 'mikrotik') =>
     fetchJson<{ success: boolean; message: string }>(`${API_BASE}/backends/test`, 'POST', { url, token, type }),
 
   testBackendById: (id: number) =>

@@ -15,6 +15,9 @@ func (c *Client) GetConfigSnapshot(ctx context.Context) (*domain.GatewayConfigSn
 	if c.gatewayType == "clash" {
 		return c.getClashConfig(ctx)
 	}
+	if c.gatewayType == "mikrotik" {
+		return c.getMikrotikConfig(ctx)
+	}
 	return c.getSurgeConfig(ctx)
 }
 
@@ -130,7 +133,51 @@ func (c *Client) GetPolicyStateSnapshot(ctx context.Context) (*domain.PolicyStat
 	if c.gatewayType == "clash" {
 		return c.getClashPolicyState(ctx)
 	}
+	if c.gatewayType == "mikrotik" {
+		return c.getMikrotikPolicyState(ctx)
+	}
 	return c.getSurgePolicyState(ctx)
+}
+
+func (c *Client) getMikrotikConfig(ctx context.Context) (*domain.GatewayConfigSnapshot, error) {
+	snap := &domain.GatewayConfigSnapshot{
+		Rules:     []domain.GatewayRule{},
+		Proxies:   make(map[string]domain.GatewayProxy),
+		Providers: make(map[string]domain.GatewayProvider),
+	}
+
+	snap.Proxies["DIRECT"] = domain.GatewayProxy{
+		Name: "DIRECT",
+		Type: "Mikrotik",
+	}
+
+	snap.Providers["default"] = domain.GatewayProvider{
+		Name:    "default",
+		Type:    "Mikrotik",
+		Proxies: []domain.GatewayProxy{snap.Proxies["DIRECT"]},
+	}
+
+	return snap, nil
+}
+
+func (c *Client) getMikrotikPolicyState(ctx context.Context) (*domain.PolicyStateSnapshot, error) {
+	snap := &domain.PolicyStateSnapshot{
+		Proxies:   make(map[string]domain.GatewayProxy),
+		Providers: make(map[string]domain.GatewayProvider),
+	}
+
+	snap.Proxies["DIRECT"] = domain.GatewayProxy{
+		Name: "DIRECT",
+		Type: "Mikrotik",
+	}
+
+	snap.Providers["default"] = domain.GatewayProvider{
+		Name:    "default",
+		Type:    "Mikrotik",
+		Proxies: []domain.GatewayProxy{snap.Proxies["DIRECT"]},
+	}
+
+	return snap, nil
 }
 
 func (c *Client) getSurgePolicyState(ctx context.Context) (*domain.PolicyStateSnapshot, error) {

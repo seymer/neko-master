@@ -40,6 +40,9 @@ func (c *Client) Collect(ctx context.Context) ([]domain.FlowSnapshot, error) {
 	if c.gatewayType == "clash" {
 		return c.collectClash(ctx)
 	}
+	if c.gatewayType == "mikrotik" {
+		return c.collectMikrotik(ctx)
+	}
 	return c.collectSurge(ctx)
 }
 
@@ -58,6 +61,15 @@ type clashConnectionsResponse struct {
 			SourceIP      string `json:"sourceIP"`
 		} `json:"metadata"`
 	} `json:"connections"`
+}
+
+type mikrotikConnection struct {
+	ID         string          `json:".id"`
+	Protocol   string          `json:"protocol"`
+	SrcAddress string          `json:"src-address"`
+	DstAddress string          `json:"dst-address"`
+	OrigBytes  flexibleFloat64 `json:"orig-bytes"`
+	ReplBytes  flexibleFloat64 `json:"repl-bytes"`
 }
 
 type flexibleID string
@@ -165,6 +177,65 @@ type surgeRequestsResponse struct {
 		InBytes            flexibleFloat64    `json:"inBytes"`
 		Time               flexibleFloat64    `json:"time"`
 	} `json:"requests"`
+}
+
+func (c *Client) collectMikrotik(ctx context.Context) ([]domain.FlowSnapshot, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.endpoint+"/rest/ip/firewall/connection", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+	if c.token != "" {
+		parts := strings.SplitN(c.token, ":", 2)
+		if len(parts) == 2 {
+			req.SetBasicAuth(parts[0], parts[1])
+		} else {
+			req.SetBasicAuth("admin", c.token) // Default to admin if only password is provided
+		}
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		return nil, fmt.Errorf("gateway http %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	var payload []mikrotikConnection
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return nil, fmt.Errorf("decode mikrotik response: %w", err)
+	}
+
+	nowMs := time.Now().UnixMilli()
+	snapshots := make([]domain.FlowSnapshot, 0, len(payload))
+	for _, reqItem := range payload {
+		id := strings.TrimSpace(reqItem.ID)
+		if id == "" {
+			continue
+		}
+
+		sourceIP := extractHost(reqItem.SrcAddress)
+		ip := extractHost(reqItem.DstAddress)
+
+		snapshots = append(snapshots, domain.FlowSnapshot{
+			ID:          id,
+			Domain:      "",
+			IP:          ip,
+			SourceIP:    sourceIP,
+			Chains:      []string{"DIRECT"},
+			Rule:        "Mikrotik",
+			RulePayload: reqItem.Protocol,
+			Upload:      toInt64(float64(reqItem.OrigBytes)),
+			Download:    toInt64(float64(reqItem.ReplBytes)),
+			TimestampMs: nowMs,
+		})
+	}
+
+	return snapshots, nil
 }
 
 func (c *Client) collectClash(ctx context.Context) ([]domain.FlowSnapshot, error) {
