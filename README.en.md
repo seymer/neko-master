@@ -244,7 +244,7 @@ Open <http://localhost:3000> to configure.
 
 Use Agent mode when you want one centralized Neko Master service and multiple remote devices (OpenWrt, Linux, macOS) collecting local gateway data. The agent runs near the gateway, pulls data, and reports to the panel — the panel never connects to the gateway directly.
 
-Supported gateway types: **Clash / Mihomo** (WebSocket real-time) and **Surge v5+** (HTTP polling).
+Supported gateway types: **Clash / Mihomo** (WebSocket real-time), **Surge v5+** (HTTP polling) and **Mikrotik**.
 
 ### Quick Install (UI-generated command)
 
@@ -918,7 +918,7 @@ docker compose up -d
 If you want to quickly understand the system design depth, read in this order:
 
 1. **System Architecture Diagram**: end-to-end layering and module responsibilities → [docs/architecture.en.md](./docs/architecture.en.md)
-2. **Data Flow**: Clash / Surge collection pipelines and aggregation
+2. **Data Flow**: Clash / Surge / Mikrotik collection pipelines and aggregation
 3. **Data Model & Storage**: SQLite schema, ClickHouse Buffer tables, retention policy
 4. **Realtime Channel Design**: `RealtimeStore` merge strategy and WS push
 5. **ClickHouse Module**: dual-write architecture, health fallback, read routing

@@ -236,11 +236,11 @@ pnpm dev
 
 当你希望中心化部署一个 Neko Master 服务，并在不同设备（OpenWrt、Linux、macOS）本地采集网关数据时，推荐使用 Agent 模式。Agent 运行在网关旁边，主动拉取数据并上报至面板，面板无需主动连接网关。
 
-支持网关类型：**Clash / Mihomo**（WebSocket 实时）和 **Surge v5+**（HTTP 轮询）。
+支持网关类型：**Clash / Mihomo**（WebSocket 实时）、**Surge v5+**（HTTP 轮询）和 **Mikrotik**。
 
 ### 快速安装（UI 生成命令）
 
-1. 在面板「设置 → 后端」中添加一个 `Agent` 类型后端，选择网关类型（Clash 或 Surge）
+1. 在面板「设置 → 后端」中添加一个 `Agent` 类型后端，选择网关类型（Clash、Surge 或 Mikrotik）
 2. 点击「查看安装脚本」，复制一键安装命令，在目标主机上执行：
 
 ```bash
@@ -908,7 +908,7 @@ docker compose up -d
 如果你想快速理解系统设计与实现深度，建议按下面顺序阅读：
 
 1. **整体架构图**：端到端分层与模块职责 → [docs/architecture.md](./docs/architecture.md)
-2. **数据流详解**：Clash / Surge 两条采集链路与聚合过程
+2. **数据流详解**：Clash / Surge / Mikrotik 多条采集链路与聚合过程
 3. **数据模型与存储**：SQLite 表结构、ClickHouse Buffer 表、保留策略
 4. **实时通道设计**：`RealtimeStore` 合并策略与 WS 推送机制
 5. **ClickHouse 模块**：双写架构、健康回退、读取路由

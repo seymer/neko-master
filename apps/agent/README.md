@@ -9,7 +9,7 @@ The agent follows a layered Go structure so that `main` stays thin and business 
 - `main.go`: process entrypoint, wiring, signal handling
 - `internal/config`: CLI parsing, validation, endpoint normalization
 - `internal/agent`: runtime loops (collector/report/heartbeat), queue/retry/state management
-- `internal/gateway`: Clash/Surge adapters, payload decoding, protocol-specific normalization
+- `internal/gateway`: Clash/Surge/Mikrotik adapters, payload decoding, protocol-specific normalization
 - `internal/domain`: shared domain models (`FlowSnapshot`, `TrafficUpdate`)
 
 ## Build
